@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration</title>
+    <link rel="stylesheet" href="/static/css/login.css">
+</head>
+<body>
+    <form id="registration_form" method="post" action="/registration">
+    <p>User Registration</p>
+
+    <div>
+        <label class="input_name">Name</label><br>
+        <input name="name" placeholder="Your name" required value="Johnie">
+    </div>
+
+    <div>
+        <label class="input_name">Nickname</label><br>
+        <input name="nickname" placeholder="Your nickname (how another people could find you)" value="lolbek">
+    </div>
+
+    <div>
+        <label class="input_name">Login</label><br>
+        <input name="login" placeholder="Login" required value="lolus">
+    </div>
+
+    <div>
+        <label class="input_name">Password</label><br>
+        <input name="password" placeholder="Password" required value="kekus">
+    </div>
+
+    <div>
+        <label class="input_name">Phone Number</label><br>
+        <input name="phone_number" placeholder="Phone number" required value="77777777">
+    </div>
+
+    <div>
+        <button id="submit">Submit</button>
+    </div>
+</form>
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+</body>
+</html>

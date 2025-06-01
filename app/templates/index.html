@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastAPI Chat</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="chat-container">
+
+        <div class="chat-sidebar">
+            <h1 style="margin: 15% 20% 15% 25%;">Chat Rooms</h1>
+            <div class="user-search">
+                <input type="text" id="user-search-input" placeholder="Search user by nickname..." autocomplete="off">
+                <ul id="user-suggestions" class="suggestions"></ul>
+            </div>
+            <div id="chat-list">
+                {% for chat in chats %}
+                    {% if chat.is_group %}
+                        <div class="single-chat" data-chat-id="{{ chat.id }}" data-chat-name="{{ chat.chat_name }}">
+                            {{ chat.chat_name }}
+                        </div>
+                    {% else %}
+                        <div class="single-chat" data-chat-id="{{ chat.id }}" data-chat-name="{{ chat.name }}">
+                            {{ chat.name }}
+                        </div>
+                    {% endif %}
+                    <br>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="chat-main">
+            <div class="chat-header">
+                <h2 id="chat-title">Main Chat</h2>
+                <div class="user-info" style="margin-left: auto; font-weight: bold;">
+                    Logged in as: {{ name }} ({{ nickname }})
+                </div>
+                <label id="current-user-id" style="display: none;"></label>
+                <label id="current-chat-id" style="display: none;"></label>
+                <label id="current-chat-name" style="display: none;"></label>
+            </div>
+
+            <div class="chat-messages" id="messages-container"></div>
+            <div class="chat-input">
+                <input type="text" id="message-input" placeholder="Type your message...">
+                <button id="send-button">Send</button>
+            </div>
+        </div>
+        <form action="/logout" method="get" style="display:inline;">
+            <button type="submit">Logout</button>
+        </form>
+    </div>
+    <script src="/static/js/chat.js"></script>
+    <script>const CURRENT_USER_ID = "{{ request.session['user_id'] }}";</script>
+    <script>
+      window.currentUserId = "{{ request.session.get('user_id') }}";
+
+      // Optionally, you can also pass currentChatId here if you have it
+      // window.currentChatId = "some-chat-id";
+    </script>
+
+    <script src="/static/js/chat_ws.js"></script>
+    <script type="module">
+    import { connectWebSocket, sendChatMessage, joinChatRoom } from '/static/js/chat_ws.js';
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const userId = "{{ request.session['user_id'] }}";
+
+        // Initialize WebSocket
+        connectWebSocket(userId, (message) => {
+            const container = document.getElementById("messages-container");
+            const msgDiv = document.createElement("div");
+            msgDiv.textContent = `${message.sender_id}: ${message.text}`;
+            container.appendChild(msgDiv);
+        });
+
+        // Setup send button
+        document.getElementById("send-button").addEventListener("click", () => {
+            const chatId = document.getElementById("current-chat-id").textContent;
+            const text = document.getElementById("message-input").value;
+            sendChatMessage(chatId, text, userId);
+            document.getElementById("message-input").value = "";
+        });
+    });
+</script>
+
+
+</body>
+</html>
