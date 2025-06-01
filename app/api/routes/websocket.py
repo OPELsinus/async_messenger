@@ -23,7 +23,6 @@ class ConnectionManager:
 
     def disconnect(self, user_id: str):
         if user_id in self.active_connections:
-            # Remove user from all chats
             for chat_id in self.user_chats.get(user_id, set()):
                 self.chat_users[chat_id].discard(user_id)
             self.user_chats.pop(user_id, None)

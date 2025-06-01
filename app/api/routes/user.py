@@ -5,6 +5,7 @@ from app.db import get_db
 from app.schemas.request_body import UserRegistration, UserLogin
 from app.services.chat_service import ChatService
 from app.services.user_service import UserService
+from app.settings.config import settings
 
 router = APIRouter()
 service = UserService()
@@ -31,7 +32,12 @@ def registration_post(
     user_body = UserRegistration(name=name, nickname=nickname, login=login, password=password, phone_number=phone_number)
     user_exists = service.check_if_user_exists(login, db)
     if not user_exists:
-        service.create_user(user_body, db)
+        new_user = service.create_user(user_body, db)
+
+        chat = chat_service.create_chat(is_group=False, chat_name='', db=db)
+        chat_service.add_member(chat.id, new_user.id, db)
+        chat_service.add_member(chat.id, settings.ADMIN_ID, db)
+
         return RedirectResponse("/", 303)
     return templates.TemplateResponse("registration.html", {"request": request, "error": "User already exists"})
 
@@ -58,7 +64,7 @@ def login_post(
     return templates.TemplateResponse("login.html", {"request": request, "error": "Invalid credentials"})
 
 
-@router.get("/logout")
+@router.post("/logout")
 def logout(request: Request):
     request.session.clear()
     return RedirectResponse("/login", status_code=303)
@@ -67,15 +73,12 @@ def logout(request: Request):
 
 @router.get("/api/search_users")
 async def search_users(current_user_id: str, nickname: str = Query(...), db=Depends(get_db)):
-    print('oadsf', current_user_id)
     results = []
     all_satisfied_users = service.get_user_by_nickname(nickname, db)
     for user in all_satisfied_users:
         if user.id == current_user_id:
             continue
         result = chat_service.get_chat_id(current_user_id, user.id, db)
-        print('---------------------\n', user.id)
-
         results.append({
             "id": user.id,
             "name": user.name,
@@ -84,5 +87,4 @@ async def search_users(current_user_id: str, nickname: str = Query(...), db=Depe
             "chat_name": result.chat_name if result is not None else None,
             "is_group": result.is_group if result is not None else False,
         })
-    print(results)
     return results

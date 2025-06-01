@@ -1,3 +1,5 @@
+import datetime
+
 from fastapi import APIRouter, Depends
 from app.db import get_db
 from app.schemas.request_body import SendMessageRequest
@@ -19,16 +21,15 @@ def get_messages(chat_id: str, db=Depends(get_db)):
     results = []
     for message in messages:
         user = user_service.repository.get_user_by_id(message.sender_id, db)
-
+        timest = message.timestamp + datetime.timedelta(hours=5)
         results.append({
             'message_id': message.id,
             'sender_id': message.sender_id,
             'user_name': user.name,
             'text': message.text,
-            'timestamp': message.timestamp,
+            'timestamp': datetime.datetime.strftime(timest, '%d.%m.%Y %H:%M:%S'),
             'is_read': message.is_read
         })
-
     return results
 
 
@@ -41,7 +42,7 @@ def send_message(message: SendMessageRequest, db=Depends(get_db)):
         chat_service.add_member(new_chat_id.id, message.receiver_id, db)
         message.chat_id = new_chat_id.id
 
-    # service.send_message(message.dict(), db)
+    service.send_message(message.dict(), db)
 
     return JSONResponse({
         "chat_id": message.chat_id

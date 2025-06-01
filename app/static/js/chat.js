@@ -3,24 +3,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
     chatItems.forEach(item => {
         item.addEventListener("click", async () => {
+            initialLoad = true;
+            console.log(item.dataset);
             const chatId = item.dataset.chatId;
             const chatName = item.dataset.chatName;
+            const nickname = item.dataset.currentUserNickname;
 
             document.getElementById("chat-title").textContent = chatName;
+            document.getElementById("current-user-nickname").textContent = "@" + nickname;
             document.getElementById("current-chat-id").textContent = chatId;
             document.getElementById("current-chat-name").textContent = chatName;
+            document.getElementById("current-user-id").textContent = item.dataset.userId || "";
 
             try {
                 const res = await fetch(`/chats/${chatId}/messages/`);
                 const messages = await res.json();
                 displayMessages(messages);
+                window.joinChatRoom(chatId);
             } catch (err) {
                 console.error('Failed to load messages:', err);
             }
         });
     });
 });
-
 
 const input = document.getElementById('user-search-input');
 const suggestionBox = document.getElementById('user-suggestions');
@@ -56,10 +61,10 @@ function renderSuggestions(results) {
             <div class="suggestion-user-id" style="display: none;">${result.id}</div>
             <div class="suggestion-name">${result.name}</div>
             <div class="suggestion-nickname">@${result.nickname}</div>
-            <div class="suggestion-chat-name">${result.chat_name}</div>
         `;
 
         li.addEventListener('click', async () => {
+            initialLoad = true;
             input.value = '';
             suggestionBox.innerHTML = '';
 
@@ -67,11 +72,13 @@ function renderSuggestions(results) {
             document.getElementById("current-user-id").textContent = result.id;
             document.getElementById("current-chat-id").textContent = result.chat_id;
             document.getElementById("current-chat-name").textContent = result.chat_name;
+            document.getElementById("current-user-nickname").textContent = "@" + result.nickname;
 
             try {
                 const res = await fetch(`/chats/${result.chat_id}/messages/`);
                 const messages = await res.json();
                 displayMessages(messages);
+                window.joinChatRoom(result.chat_id);
             } catch (err) {
                 console.error('Failed to load messages:', err);
             }
@@ -93,8 +100,10 @@ document.getElementById("send-button").addEventListener("click", async () => {
     const response = await fetch(`/chats/messages/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: chatId, sender_id: senderId, text: text, receiver_id: receiverId})
+        body: JSON.stringify({ chat_id: chatId, sender_id: senderId, text: text, receiver_id: receiverId })
     });
+
+    let chatId_new = chatId;
 
     if (response.ok) {
         const data = await response.json();
@@ -104,7 +113,9 @@ document.getElementById("send-button").addEventListener("click", async () => {
     }
 
     document.getElementById("current-chat-id").textContent = chatId_new;
+    document.getElementById("current-user-id").textContent = receiverId;
     input.value = '';
+
     try {
         const res = await fetch(`/chats/${chatId_new}/messages/`);
         const messages = await res.json();
@@ -114,11 +125,30 @@ document.getElementById("send-button").addEventListener("click", async () => {
     }
 });
 
+let initialLoad = true;
+
 function displayMessages(messages) {
     const container = document.getElementById("messages-container");
+
+    const previousScroll = container.scrollTop;
+    const previousHeight = container.scrollHeight;
+    const isAtBottom = Math.abs(previousScroll + container.clientHeight - previousHeight) < 10;
+
     container.innerHTML = '';
+    let lastDate = null;
 
     messages.forEach(msg => {
+        if (!msg.user_name || !msg.text || !msg.timestamp) return;
+
+        const [datePart, timePart] = msg.timestamp.split(' ');
+        if (datePart !== lastDate) {
+            const dateDiv = document.createElement('div');
+            dateDiv.classList.add('date-divider');
+            dateDiv.textContent = datePart;
+            container.appendChild(dateDiv);
+            lastDate = datePart;
+        }
+
         const msgDiv = document.createElement('div');
         msgDiv.classList.add('message');
 
@@ -128,15 +158,33 @@ function displayMessages(messages) {
             msgDiv.classList.add('message-left');
         }
 
-        msgDiv.innerHTML = `
-            <strong>${msg.user_name || msg.sender_id}</strong>: ${msg.text}
-        `;
-
+        msgDiv.innerHTML = `<strong>${msg.user_name}</strong>: ${msg.text}<br><small>${timePart}</small>`;
         container.appendChild(msgDiv);
     });
 
-    container.scrollTop = container.scrollHeight;
+    if (initialLoad || isAtBottom) {
+        container.scrollTop = container.scrollHeight;
+    }
+
+    initialLoad = false;
 }
 
+setInterval(async () => {
+    const chatId = document.getElementById("current-chat-id").textContent;
+    if (!chatId) return;
 
+    try {
+        const res = await fetch(`/chats/${chatId}/messages/`);
+        const messages = await res.json();
+        displayMessages(messages);
+    } catch (err) {
+        console.error("Auto-refresh failed:", err);
+    }
+}, 3000);
 
+document.getElementById("message-input").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        document.getElementById("send-button").click();
+    }
+});

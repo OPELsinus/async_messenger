@@ -32,6 +32,11 @@ app.include_router(message.router)
 app.include_router(websocket.router)
 
 
+from fastapi import status
+from fastapi.responses import RedirectResponse
+from app.settings.config import settings
+
+
 @app.get("/")
 async def read_root(request: Request, db=Depends(get_db)):
     user_id = request.session.get("user_id")
@@ -39,14 +44,39 @@ async def read_root(request: Request, db=Depends(get_db)):
     name = request.session.get("name")
 
     if not user_id:
-        return RedirectResponse("/login", 303)
+        return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
 
     chat_service = ChatService()
     chats = chat_service.get_chats_for_user(user_id, db=db)
+
+    admin_id = settings.ADMIN_ID
+
+    personal_chat = None
+    for c in chats:
+        companion_id = c.get('user_id')
+        if not c['is_group'] and companion_id == admin_id:
+            personal_chat = c
+            break
+
+    if not personal_chat and user_id != admin_id:
+
+        chats = chat_service.get_chats_for_user(user_id, db=db)
+
+        for c in chats:
+            if c['id'] == chat.id:
+                personal_chat = c
+                break
+
+    selected_chat_id = personal_chat['id'] if personal_chat else None
+    selected_chat_name = personal_chat['chat_name'] if personal_chat else "Main chat"
+    selected_user_nickname = personal_chat['user_nickname'] if personal_chat else ''
+    print(chats)
     return templates.TemplateResponse("index.html", {
         "request": request,
         "chats": chats,
         "nickname": nickname,
-        "name": name
+        "name": name,
+        "selected_chat_id": selected_chat_id,
+        "selected_chat_name": selected_chat_name,
+        "selected_user_nickname": selected_user_nickname
     })
-

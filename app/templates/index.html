@@ -10,6 +10,15 @@
     <div class="chat-container">
 
         <div class="chat-sidebar">
+            <div class="top-bar">
+                <div class="user-info">
+                    <div class="user-name">Logged as: <strong>{{ name }}</strong> (@{{ nickname }})</div>
+                    <form method="post" action="/logout">
+                        <button class="logout-button" type="submit">Logout</button>
+                    </form>
+                </div>
+            </div>
+
             <h1 style="margin: 15% 20% 15% 25%;">Chat Rooms</h1>
             <div class="user-search">
                 <input type="text" id="user-search-input" placeholder="Search user by nickname..." autocomplete="off">
@@ -18,11 +27,11 @@
             <div id="chat-list">
                 {% for chat in chats %}
                     {% if chat.is_group %}
-                        <div class="single-chat" data-chat-id="{{ chat.id }}" data-chat-name="{{ chat.chat_name }}">
+                        <div class="single-chat" data-chat-id="{{ chat.id }}" data-chat-name="{{ chat.chat_name }}" data-current-user-nickname="{{ chat.user_nickname }}">
                             {{ chat.chat_name }}
                         </div>
                     {% else %}
-                        <div class="single-chat" data-chat-id="{{ chat.id }}" data-chat-name="{{ chat.name }}">
+                        <div class="single-chat" data-chat-id="{{ chat.id }}" data-chat-name="{{ chat.name }}" data-current-user-nickname="{{ chat.user_nickname }}">
                             {{ chat.name }}
                         </div>
                     {% endif %}
@@ -32,12 +41,10 @@
         </div>
         <div class="chat-main">
             <div class="chat-header">
-                <h2 id="chat-title">Main Chat</h2>
-                <div class="user-info" style="margin-left: auto; font-weight: bold;">
-                    Logged in as: {{ name }} ({{ nickname }})
-                </div>
+                <h2 id="chat-title">{{ selected_chat_name }}</h2>
+                <span id="current-chat-id" style="display:none;">{{ selected_chat_id }}</span>
+                <label id="current-user-nickname">@{{ selected_user_nickname }}</label>
                 <label id="current-user-id" style="display: none;"></label>
-                <label id="current-chat-id" style="display: none;"></label>
                 <label id="current-chat-name" style="display: none;"></label>
             </div>
 
@@ -47,9 +54,6 @@
                 <button id="send-button">Send</button>
             </div>
         </div>
-        <form action="/logout" method="get" style="display:inline;">
-            <button type="submit">Logout</button>
-        </form>
     </div>
     <script src="/static/js/chat.js"></script>
     <script>const CURRENT_USER_ID = "{{ request.session['user_id'] }}";</script>
@@ -61,29 +65,6 @@
     </script>
 
     <script src="/static/js/chat_ws.js"></script>
-    <script type="module">
-    import { connectWebSocket, sendChatMessage, joinChatRoom } from '/static/js/chat_ws.js';
-
-    document.addEventListener("DOMContentLoaded", () => {
-        const userId = "{{ request.session['user_id'] }}";
-
-        // Initialize WebSocket
-        connectWebSocket(userId, (message) => {
-            const container = document.getElementById("messages-container");
-            const msgDiv = document.createElement("div");
-            msgDiv.textContent = `${message.sender_id}: ${message.text}`;
-            container.appendChild(msgDiv);
-        });
-
-        // Setup send button
-        document.getElementById("send-button").addEventListener("click", () => {
-            const chatId = document.getElementById("current-chat-id").textContent;
-            const text = document.getElementById("message-input").value;
-            sendChatMessage(chatId, text, userId);
-            document.getElementById("message-input").value = "";
-        });
-    });
-</script>
 
 
 </body>

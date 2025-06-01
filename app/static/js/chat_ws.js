@@ -1,49 +1,43 @@
-// chat_ws.js
 let socket;
-let reconnectAttempts = 0;
-const maxReconnectAttempts = 5;
+let currentRoomId = null;
 
-export function connectWebSocket(userId, onMessageCallback) {
-    socket = new WebSocket(`ws://${location.host}/ws/${userId}`);
-
-    socket.onopen = () => {
-        console.log("WebSocket connected");
-        reconnectAttempts = 0;
-    };
-
-    socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type === "new_message") {
-            onMessageCallback(data.message);
-        }
-    };
-
-    socket.onclose = () => {
-        if (reconnectAttempts < maxReconnectAttempts) {
-            setTimeout(() => {
-                reconnectAttempts++;
-                connectWebSocket(userId, onMessageCallback);
-            }, 1000);
-        }
-    };
-}
-
-export function sendChatMessage(chatId, text, senderId) {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({
-            type: "send_message",
-            chat_id: chatId,
-            text: text,
-            sender_id: senderId
-        }));
+function joinChatRoom(chatId) {
+    if (socket) {
+        socket.close();
     }
+
+    currentRoomId = chatId;
+
+    socket = new WebSocket(`ws://${location.host}/ws/${chatId}`);
+
+    socket.onmessage = function (event) {
+        const message = JSON.parse(event.data);
+        appendMessage(message);
+    };
+
+    socket.onclose = function () {
+        console.log("WebSocket closed");
+    };
 }
 
-export function joinChatRoom(chatId) {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({
-            type: "join_chat",
-            chat_id: chatId
-        }));
+function appendMessage(msg) {
+    const container = document.getElementById("messages-container");
+
+    if (msg.user_name == undefined || msg.user_name === undefined) return;
+
+    const msgDiv = document.createElement('div');
+    msgDiv.classList.add('message');
+
+    if (msg.sender_id === CURRENT_USER_ID) {
+        msgDiv.classList.add('message-right');
+    } else {
+        msgDiv.classList.add('message-left');
     }
+
+    msgDiv.innerHTML = `<strong>${msg.user_name || msg.sender_id}</strong>: ${msg.text}<br>hueta`;
+
+    container.appendChild(msgDiv);
+    container.scrollTop = container.scrollHeight;
 }
+
+window.joinChatRoom = joinChatRoom;

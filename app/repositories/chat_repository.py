@@ -44,7 +44,8 @@ class ChatRepository:
 
         companions_map = {}
         for chat_id, user_id in companion_ids.items():
-            companions_map[chat_id] = user_map.get(user_id, "Unknown")
+            print('Here', user_id)
+            companions_map[chat_id] = {'chat_name': user_map.get(user_id, "Unknown"), 'user_id': user_id}
 
         return companions_map
 
