@@ -39,13 +39,13 @@ from app.settings.config import settings
 
 @app.get("/")
 async def read_root(request: Request, db=Depends(get_db)):
-    user_id = int(request.session.get("user_id"))
+    user_id = request.session.get("user_id")
     nickname = request.session.get("nickname")
     name = request.session.get("name")
 
     if not user_id:
         return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
-
+    user_id = int(user_id)
     chat_service = ChatService()
     chats = chat_service.get_chats_for_user(user_id, db=db)
 

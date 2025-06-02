@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Request, Form, Query
+from starlette.responses import FileResponse
 from starlette.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from app.db import get_db
@@ -57,7 +58,7 @@ def login_post(
     user_body = UserLogin(login=login, password=password)
     user = service.auth_user(user_body, db)
     if user:
-        request.session["user_id"] = str(user.id)
+        request.session["user_id"] = user.id
         request.session["nickname"] = user.nickname
         request.session["name"] = user.name
         return RedirectResponse("/", 303)
@@ -88,3 +89,11 @@ async def search_users(current_user_id: int, nickname: str = Query(...), db=Depe
             "is_group": result.is_group if result is not None else False,
         })
     return results
+
+
+@router.get("/download-db")
+def download_db(request: Request):
+    if request.session["user_id"] == 1:
+        return FileResponse("app.db", media_type='application/octet-stream', filename="app.db")
+
+    return RedirectResponse("/", 303)

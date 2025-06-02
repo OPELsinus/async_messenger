@@ -40,7 +40,7 @@ class MessageDB(Base):
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     chat_id: Mapped[str] = mapped_column(String, ForeignKey("chats.id"))
-    sender_id: Mapped[str] = mapped_column(String)
+    sender_id: Mapped[int] = mapped_column(Integer)
     text: Mapped[str] = mapped_column(String)
     timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     is_read: Mapped[bool] = mapped_column(Boolean, default=False)
