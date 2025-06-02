@@ -41,3 +41,9 @@ button:hover {
     font-size: 13px;
     font-weight: bold;
 }
+
+.reg_form {
+    position: relative;
+    display: flex;
+    margin-top: 10%;
+}
