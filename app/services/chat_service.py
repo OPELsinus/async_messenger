@@ -19,7 +19,7 @@ class ChatService:
         chat_ids = [cm.chat_id for cm in raw_memberships]
 
         chat_data = self.repository.get_chats(chat_ids, db)
-        print('OPA', user_id, type(user_id))
+
         companions_map = self.repository.get_companions_for_chat_ids(chat_ids, db, user_id)
         user_chats = []
 
@@ -33,6 +33,7 @@ class ChatService:
 
             user_id = companions_map.get(chat.id, {'user_id': settings.ADMIN_ID}).get('user_id')
 
+            print('HERE BEFORE ERROR!', user_id)
             user_nickname = user_service.get_user_by_id(user_id, db).nickname
 
             user_chats.append({
