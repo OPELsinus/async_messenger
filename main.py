@@ -39,7 +39,7 @@ from app.settings.config import settings
 
 @app.get("/")
 async def read_root(request: Request, db=Depends(get_db)):
-    user_id = request.session.get("user_id")
+    user_id = int(request.session.get("user_id"))
     nickname = request.session.get("nickname")
     name = request.session.get("name")
 
@@ -59,10 +59,17 @@ async def read_root(request: Request, db=Depends(get_db)):
             break
 
     if not personal_chat and user_id != admin_id:
+        chat_exists = chat_service.get_chat_id(user_id, admin_id, db)
+        if not chat_exists:
+            chat = chat_service.create_chat(is_group=False, chat_name='', db=db)
+            chat_service.add_member(chat.id, user_id, db)
+            chat_service.add_member(chat.id, admin_id, db)
+        else:
+            chat = chat_exists
 
-        chats = chat_service.get_chats_for_user(user_id, db=db)
+        chats_ = chat_service.get_chats_for_user(user_id, db=db)
 
-        for c in chats:
+        for c in chats_:
             if c['id'] == chat.id:
                 personal_chat = c
                 break

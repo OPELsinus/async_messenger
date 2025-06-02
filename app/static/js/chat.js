@@ -1,6 +1,17 @@
 document.addEventListener("DOMContentLoaded", function () {
     const chatItems = document.querySelectorAll(".single-chat");
 
+    const chatId = document.getElementById("current-chat-id").textContent;
+    if (chatId) {
+        fetch(`/chats/${chatId}/messages/`)
+            .then(res => res.json())
+            .then(messages => {
+                displayMessages(messages);
+                window.joinChatRoom(chatId);
+            })
+            .catch(err => console.error("Failed to load initial messages:", err));
+    }
+
     chatItems.forEach(item => {
         item.addEventListener("click", async () => {
             initialLoad = true;
@@ -13,7 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
             document.getElementById("current-user-nickname").textContent = "@" + nickname;
             document.getElementById("current-chat-id").textContent = chatId;
             document.getElementById("current-chat-name").textContent = chatName;
-            document.getElementById("current-user-id").textContent = item.dataset.userId || "";
+            document.getElementById("current-user-id").textContent = item.dataset.currentUserId;
 
             try {
                 const res = await fetch(`/chats/${chatId}/messages/`);
@@ -25,6 +36,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
+
 });
 
 const input = document.getElementById('user-search-input');
@@ -93,10 +105,9 @@ document.getElementById("send-button").addEventListener("click", async () => {
     const text = input.value.trim();
     const chatId = document.getElementById("current-chat-id").textContent;
     const senderId = CURRENT_USER_ID;
-    const receiverId = document.getElementById("current-user-id").textContent;
-
+    const receiverId = parseInt(document.getElementById("current-user-id").textContent, 10);
+    console.log({ chat_id: chatId, sender_id: senderId, text: text, receiver_id: receiverId });
     if (!text || !senderId) return;
-
     const response = await fetch(`/chats/messages/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -154,11 +165,13 @@ function displayMessages(messages) {
 
         if (msg.sender_id === CURRENT_USER_ID) {
             msgDiv.classList.add('message-right');
+            var msgSender = 'You';
         } else {
             msgDiv.classList.add('message-left');
+            var msgSender = msg.user_name;
         }
 
-        msgDiv.innerHTML = `<strong>${msg.user_name}</strong>: ${msg.text}<br><small>${timePart}</small>`;
+        msgDiv.innerHTML = `<strong>${msgSender}</strong><br><br>${msg.text}<br><small style="font-size: 11px;">${timePart}</small>`;
         container.appendChild(msgDiv);
     });
 

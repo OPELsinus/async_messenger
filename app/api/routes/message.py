@@ -35,7 +35,7 @@ def get_messages(chat_id: str, db=Depends(get_db)):
 
 @router.post("/chats/messages/")
 def send_message(message: SendMessageRequest, db=Depends(get_db)):
-
+    print('OPUS')
     if message.chat_id is None or message.chat_id == '':
         new_chat_id = chat_service.create_chat(is_group=False, chat_name='', db=db)
         chat_service.add_member(new_chat_id.id, message.sender_id, db)

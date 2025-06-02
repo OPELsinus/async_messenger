@@ -5,7 +5,7 @@ from datetime import datetime
 class Message(BaseModel):
     id: str
     chat_id: str
-    sender_id: str
+    sender_id: int
     text: str
     timestamp: datetime
     is_read: bool
@@ -26,6 +26,6 @@ class UserLogin(BaseModel):
 
 class SendMessageRequest(BaseModel):
     chat_id: str
-    sender_id: str
-    receiver_id: str
+    sender_id: int
+    receiver_id: int
     text: str

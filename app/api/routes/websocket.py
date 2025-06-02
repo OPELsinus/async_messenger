@@ -14,25 +14,25 @@ message_service = MessageService()
 class ConnectionManager:
     def __init__(self):
         self.active_connections: Dict[str, WebSocket] = {}
-        self.user_chats: DefaultDict[str, Set[str]] = defaultdict(set)  # user_id -> set of chat_ids
+        self.user_chats: DefaultDict[int, Set[int]] = defaultdict(set)  # user_id -> set of chat_ids
         self.chat_users: DefaultDict[str, Set[str]] = defaultdict(set)  # chat_id -> set of user_ids
 
-    async def connect(self, websocket: WebSocket, user_id: str):
+    async def connect(self, websocket: WebSocket, user_id: int):
         await websocket.accept()
         self.active_connections[user_id] = websocket
 
-    def disconnect(self, user_id: str):
+    def disconnect(self, user_id: int):
         if user_id in self.active_connections:
             for chat_id in self.user_chats.get(user_id, set()):
                 self.chat_users[chat_id].discard(user_id)
             self.user_chats.pop(user_id, None)
             self.active_connections.pop(user_id, None)
 
-    async def join_chat(self, user_id: str, chat_id: str):
+    async def join_chat(self, user_id: int, chat_id: str):
         self.user_chats[user_id].add(chat_id)
         self.chat_users[chat_id].add(user_id)
 
-    async def broadcast(self, message: dict, chat_id: str, exclude_user_id: str = None):
+    async def broadcast(self, message: dict, chat_id: str, exclude_user_id: int = None):
         for user_id in self.chat_users.get(chat_id, set()):
             if user_id != exclude_user_id and user_id in self.active_connections:
                 try:
@@ -46,7 +46,7 @@ manager = ConnectionManager()
 
 
 @router.websocket("/ws/{user_id}")
-async def websocket_endpoint(websocket: WebSocket, user_id: str, db=Depends(get_db)):
+async def websocket_endpoint(websocket: WebSocket, user_id: int, db=Depends(get_db)):
     await manager.connect(websocket, user_id)
     try:
         while True:

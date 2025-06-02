@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -9,7 +9,7 @@ from app.db import Base
 
 class Users(Base):
     __tablename__ = "users"
-    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     created: Mapped[datetime] = Column(DateTime, default=datetime.utcnow)
     name: Mapped[str] = mapped_column(String(100))
     nickname: Mapped[str] = mapped_column(String(50))
@@ -32,7 +32,7 @@ class ChatMember(Base):
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     chat_id: Mapped[str] = mapped_column(String, ForeignKey("chats.id"))
-    user_id: Mapped[str] = mapped_column(String, ForeignKey("users.id"))
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
 
 
 class MessageDB(Base):

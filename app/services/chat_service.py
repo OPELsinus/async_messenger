@@ -11,14 +11,15 @@ class ChatService:
     def create_chat(self, is_group: bool, chat_name: str, db):
         return self.repository.create_chat(is_group, chat_name, db)
 
-    def add_member(self, chat_id: str, user_id: str, db):
+    def add_member(self, chat_id: str, user_id: int, db):
         return self.repository.add_member(chat_id, user_id, db)
 
-    def get_chats_for_user(self, user_id: str, db):
+    def get_chats_for_user(self, user_id: int, db):
         raw_memberships = self.repository.get_raw_chats(user_id, db)
         chat_ids = [cm.chat_id for cm in raw_memberships]
 
         chat_data = self.repository.get_chats(chat_ids, db)
+        print('OPA', user_id, type(user_id))
         companions_map = self.repository.get_companions_for_chat_ids(chat_ids, db, user_id)
         user_chats = []
 
@@ -45,5 +46,5 @@ class ChatService:
 
         return user_chats
 
-    def get_chat_id(self, current_user_id: str, companion_id: str, db):
+    def get_chat_id(self, current_user_id: int, companion_id: int, db):
         return self.repository.get_chat_id_for_current_user(current_user_id, companion_id, db)

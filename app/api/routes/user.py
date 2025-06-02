@@ -72,7 +72,7 @@ def logout(request: Request):
 
 
 @router.get("/api/search_users")
-async def search_users(current_user_id: str, nickname: str = Query(...), db=Depends(get_db)):
+async def search_users(current_user_id: int, nickname: str = Query(...), db=Depends(get_db)):
     results = []
     all_satisfied_users = service.get_user_by_nickname(nickname, db)
     for user in all_satisfied_users:
