@@ -35,21 +35,17 @@ class ChatRepository:
         return db.query(Chat).filter(Chat.id == chat_id[0]).first()
 
     def get_companions_for_chat_ids(self, chat_ids: list, db, current_user_id: int):
-        print('PPPP', chat_ids)
+
         members = db.query(ChatMember).filter(ChatMember.chat_id.in_(chat_ids)).all()
-        for member in members:
-            print(member.user_id, member.chat_id, ' | ', current_user_id)
         companion_ids = {m.chat_id: m.user_id for m in members if m.user_id != current_user_id}
-        [print(type(m.user_id), type(current_user_id)) for m in members if m.user_id != current_user_id]
+
         user_ids = list(set(companion_ids.values()))
         users = db.query(Users).filter(Users.id.in_(user_ids)).all()
         user_map = {user.id: user.name for user in users}
 
         companions_map = {}
-        print('KOE', user_map)
         for chat_id, user_id in companion_ids.items():
             companions_map[chat_id] = {'chat_name': user_map.get(user_id, "Unknown"), 'user_id': user_id}
-            print(chat_id, companions_map[chat_id], current_user_id)
 
         return companions_map
 
