@@ -34,6 +34,9 @@ class ChatService:
             user_id = companions_map.get(chat.id, {'user_id': settings.ADMIN_ID}).get('user_id')
 
             print('HERE BEFORE ERROR!', user_id)
+            if user_id is None:
+                print('Skipping')
+                continue
             user_nickname = user_service.get_user_by_id(user_id, db).nickname
 
             user_chats.append({
